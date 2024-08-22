@@ -43,9 +43,18 @@
         <activity android:name=".PostreMain"
             android:exported="false"
             />
+        <activity android:name=".RegistroActivity"
+            android:exported="false"
+            />
+        <activity android:name=".MenuActivity"
+            android:exported="false"
+            />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
+
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

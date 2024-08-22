@@ -2,53 +2,64 @@ package com.example.app_int_menu
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.util.Log
+import android.util.Log.*
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.app_int_menu.databinding.ActivityMainBinding
+import com.example.app_int_menu.databinding.ActivityLoginBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.example.app_int_menu.model.LoginRequest
+import kotlin.math.log
 
 
 class MainActivity : AppCompatActivity() {
-    lateinit var binding: ActivityMainBinding
 
+
+
+    private lateinit var binding: ActivityLoginBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.imagenbutton1.setOnClickListener {
-            val intent = Intent(this, Arepa::class.java)
-            startActivity(intent)
-        }
+        binding.btnLogin.setOnClickListener {
+            val email = binding.etEmail.text.toString()
+            val password = binding.etPassword.text.toString()
 
-        binding.imagenbutton2.setOnClickListener {
-            val intent = Intent(this, ProductoMain::class.java)
-            startActivity(intent)
+            if (email.isNotEmpty() && password.isNotEmpty()) {
+                iniciarSesion(email, password)
+            } else {
+                Toast.makeText(this, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
+            }
         }
-        binding.imagenbutton3.setOnClickListener {
-            val intent = Intent(this, Perro::class.java)
-            startActivity(intent)
-        }
-
-        binding.imagenbutton6.setOnClickListener {
-            val intent = Intent(this, Cafe::class.java)
-            startActivity(intent)
-        }
-        binding.imagenbutton7.setOnClickListener {
-            val intent = Intent(this, BebidaMain::class.java)
-            startActivity(intent)
-        }
-
-        binding.imagenbutton11.setOnClickListener {
-            val intent = Intent(this, Helado::class.java)
-            startActivity(intent)
-        }
-
-        binding.imagenbutton12.setOnClickListener {
-            val intent = Intent(this, PostreMain::class.java)
-            startActivity(intent)
-        }
-
     }
+
+    private fun iniciarSesion(email: String, password: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val loginRequest = LoginRequest(email, password)
+            val response = RetrofitClient.webService.loginUsuario(loginRequest)
+
+            runOnUiThread {
+                // Log the response to see what's being returned by the server
+                Log.d("LoginResponse", response.toString())
+
+                if (response.isSuccessful && response.body() != null) {
+                    val loginResponse = response.body()!!
+                    Toast.makeText(this@MainActivity, "Bienvenido ${loginResponse.usuarioId}", Toast.LENGTH_SHORT).show()
+
+                    // Redirigir a MenuActivity después de un inicio de sesión exitoso
+                    val intent = Intent(this@MainActivity, MenuActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    // Log the error message for debugging
+                    Log.e("LoginError", "Error en el inicio de sesión: ${response.errorBody()?.string()}")
+                    Toast.makeText(this@MainActivity, "Error en el inicio de sesión", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
+}
